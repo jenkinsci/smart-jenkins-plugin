@@ -1,0 +1,6 @@
+<!--
+  This view is used to render the installed plugins page.
+-->
+<div>
+  This plugin reduces the electricity consumption by shutting down idle slaves and re-schedules jobs to avoid the rush hours of electricity. 
+</div>

@@ -1,0 +1,300 @@
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:i="jelly:fmt">
+	<l:layout title="${it.title}">
+		<l:header>
+			<script type="text/javascript">
+	  			Timeline_ajax_url = "${it.pluginResourcePath}timeline_2.3.0/timeline_ajax/simile-ajax-api.js";
+	  			Timeline_urlPrefix = "${it.pluginResourcePath}timeline_2.3.0/timeline_js/";   
+	  			Timeline_parameters = "bundle=true";
+			</script>
+			<script src="${it.pluginResourcePath}timeline_2.3.0/timeline_js/timeline-api.js" type="text/javascript"></script>
+			<script type="text/javascript">
+				addWindowEventListener("load",
+					function() {
+						var tl;
+						var tz = ${it.timeZoneOffset};
+
+						var eventSource = new Timeline.DefaultEventSource();
+						eventSource.loadJSON(eval("${it.jobEventsJSON}"), ".");
+						var bandInfos = [
+							Timeline.createBandInfo({
+								eventSource:	eventSource,
+								date:			"${it.configuration.timeSlot.currentTime}",
+								timeZone:       tz,
+								width:			"30%",
+								intervalUnit:	Timeline.DateTime.DAY,
+								intervalPixels:	200,
+								overview:		true
+							}),
+							Timeline.createBandInfo({
+								eventSource:	eventSource,
+								date:			"${it.configuration.timeSlot.currentTime}",
+								timeZone:       tz,
+								width:			"70%",
+								intervalUnit:	Timeline.DateTime.HOUR,
+								intervalPixels:	100
+							})
+						];
+
+						for (var i = 0; i ${%lessThan} bandInfos.length; i++) {
+							bandInfos[i].decorators = ${it.configuration.timeSlot.decoratorJSON};
+						}
+
+						bandInfos[0].syncWith = 1;
+						bandInfos[0].highlight = true;
+
+						tl = Timeline.create(document.getElementById("smart-jenkins-timeline"), bandInfos);
+
+						var resizeTimerID = null;
+						addWindowEventListener("resize",
+							function onResize() {
+								if (resizeTimerID == null) {
+									resizeTimerID = window.setTimeout(function() {
+										resizeTimerID = null;
+										tl.layout();
+									}, 500);
+								}
+							}
+						);	
+					}
+				);
+			
+				function addWindowEventListener(event, func) {
+					if (window.addEventListener) { //for W3C DOM
+						window.addEventListener(event, func, false);
+					} else if (window.attachEvent) { //for IE
+						window.attachEvent("on" + event, func);
+					} else {
+						if (event == "load") {
+							window.onload = func;
+						} else if (event == "resize") {
+							window.onresize = func;
+						}
+					}
+				}
+				
+				function showHelp(name) {
+					if (document.getElementById(name).style.display == "none") {
+						document.getElementById(name).style.display = "";
+					} else {
+						document.getElementById(name).style.display = "none";
+					}
+				}
+				
+				function validate() {
+					return validateTimeSlot();
+				}
+
+				function validateTimeSlot() {
+					var items = document.getElementById("timeSlot").value.replace(/\s/g, "").split(",");
+					for (var i in items) {
+						if (!items[i].match(/^((\d|[01][0-9]|2[0-4])(:(\d|[05][0-9])){0,2})?(-((\d|[01][0-9]|2[0-4])(:(\d|[05][0-9])){0,2})?)?$/)) {
+							alert('Invalid input value "' + items[i] + '".');
+							return false;
+						}
+					}
+					return true;
+				}
+			</script>
+			<style type="text/css">
+				.jobTable {
+					border: 1px solid #BBB;
+					border-collapse: collapse;
+				}
+				.jobTable tr {
+					border: 1px solid #BBB;
+					padding: 3px 4x;
+					text-align: center;
+				}
+				.jobTable td {
+					vertical-align: middle;
+				}
+	
+				.jobTableFontSizeS td {
+					font-size: 11px;
+				}
+				.jobTableFontSizeM td {
+					font-size: 15px;
+				}
+				.jobTableFontSizeL td {
+					font-size: 19px;
+				}
+
+				td.tab {
+					background-color: #FFFFFF;
+				}
+				td.tab:hover {
+					background-color: #777;
+				}
+			</style>
+		</l:header>
+	
+		<st:include it="${it.parentObject}" page="sidepanel.jelly" />
+		<l:main-panel>
+			<table width="100%">
+				<tr>
+					<td>
+						<j:if test="${it.configuration.enable}">
+							<a href="enable">Disable Smart-Jenkins Scheduler</a>
+						</j:if>
+						<j:if test="${!it.configuration.enable}">
+							<a href="enable">Enable Smart-Jenkins Scheduler</a>
+						</j:if>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<div id="smart-jenkins-timeline" style="height: 200px; border: 1px solid #aaa"></div>
+					</td>
+				</tr>
+			</table>
+
+			<j:if test="${it.configuration.enable}">
+			<f:form action="configureTimeSlot" method="post" onsubmit="return validate();">
+				<f:block>
+					<table width="100%">
+						<tr>
+							<td style="white-space: nowrap; vertical-align: middle;">OK Time Slot</td>
+							<td style="width: 100%; vertical-align: middle;">
+								<f:textbox name="timeSlot" value="${it.configuration.timeSlot.value}" style="width: 100%"/>
+							</td>
+							<td style="vertical-align: middle;">
+								<a href="javascript:showHelp('helpForTimeSlot');">
+									<img alt="Help For OK Time Slot" src="${it.rootPath}images/16x16/help.png" height="16" width="16"/>
+								</a>
+							</td>
+						</tr>
+						<tr>
+							<td colspan="2">
+								<div id="helpForTimeSlot" style="display: none; background-color: #F0F0F0; border: 1px solid #BBB; padding: 1em;">
+									Rule : Day of the week|Date@Time slot
+									Example
+									<table>
+										<tr>
+											<td>1-5@8-18</td>
+											<td>: Every Monday to Friday, From 08:00:00 to 18:00:00</td>
+										</tr>
+										<tr>
+											<td>*@8:30-18:30</td>
+											<td>: Everyday, From 08:30:00 to 18:30:00</td>
+										</tr>
+										<tr>
+											<td>2011/7/1@*</td>
+											<td>: 2011/7/1, From 00:00:00 to 24:00:00</td>
+										</tr>
+										<tr>
+											<td>7|2011/7/1@0-5|10-15</td>
+											<td>: Every Sunday or 2011/7/1, From 00:00:00 to 05:00:00 or from 10:00:00 to 15:00:00</td>
+										</tr>
+									</table>
+								</div>
+							</td>
+							<td></td>
+						</tr>
+						<tr>
+							<td colspan="3">
+								<f:submit name="Submit" value="SAVE"/>
+							</td>
+						</tr>
+					</table>
+				</f:block>
+			</f:form>
+
+			<f:form action="configure" method="post">	
+				<f:block>
+					<table width="100%" cellpadding="0" cellspacing="0">
+						<tr style="height:3px;">
+							<td style="height:3px; padding:0px"></td>
+							<j:if test="${it.configuration.tabType == 0}">
+								<td rowspan="2" style="vertical-align: middle; text-align: center; width: 60px; border: solid 1px #BBB; border-bottom: none; background-color: #F0F0F0;"><b>JOBS</b></td>
+								<td style="height:3px; padding:0px"></td>
+							</j:if>
+							<j:if test="${it.configuration.tabType == 1}">
+								<td style="height:3px; padding:0px"></td>
+								<td rowspan="2" style="vertical-align: middle; text-align: center; width: 60px; border: solid 1px #BBB; border-bottom: none; background-color: #F0F0F0;"><b>SLAVES</b></td>
+							</j:if>
+							<td style="height:3px; padding:0px"></td>
+						</tr>
+						<tr height="25px">
+							<td style="border: none; border-bottom: 1px solid #bbb;"></td>
+							<j:if test="${it.configuration.tabType == 0}">
+								<td class="tab" style="vertical-align: middle; text-align: center; width: 60px; border: solid 1px #BBB; border-left: none;"><a style="text-decoration: none;" href="${it.rootPath}smart-jenkins/changeTab?tab=1"><b>SLAVES</b></a></td>
+							</j:if>
+							<j:if test="${it.configuration.tabType == 1}">
+								<td class="tab" style="vertical-align: middle; text-align: center; width: 60px; border: solid 1px #BBB; border-right: none;"><a style="text-decoration: none;" href="${it.rootPath}smart-jenkins/changeTab?tab=0"><b>JOBS</b></a></td>
+							</j:if>
+							<td style="vertical-align: middle; border-bottom: solid 1px #BBB;" align="right">
+								<table cellspacing="1" cellpadding="1">
+									<tr>
+										<td>Font Size:</td>
+										<j:switch on="${it.configuration.fontSize}">
+											<j:case value="S">
+												<td id="fontSizeS">S</td>
+												<td id="fontSizeM"><a href="fontSize?size=M">M</a></td>
+												<td id="fontSizeL"><a href="fontSize?size=L">L</a></td>
+											</j:case>
+											<j:case value="M">
+												<td id="fontSizeS"><a href="fontSize?size=S">S</a></td>
+												<td id="fontSizeM">M</td>
+												<td id="fontSizeL"><a href="fontSize?size=L">L</a></td>
+											</j:case>
+											<j:case value="L">
+												<td id="fontSizeS"><a href="fontSize?size=S">S</a></td>
+												<td id="fontSizeM"><a href="fontSize?size=M">M</a></td>
+												<td id="fontSizeL">L</td>
+											</j:case>
+										</j:switch>
+									</tr>
+								</table>
+							</td>
+						</tr>
+					</table>
+					
+					<j:if test="${it.configuration.tabType == 0}">
+					<table id="jobTable" class="jobTable jobTableFontSize${it.configuration.fontSize}" width="100%" style="margin-top:0px; border-top: none;">
+						<tr height="25px" style="background-color: #F0F0F0; border-top: none;">
+							<th>ENABLE</th>
+							<th>JOB NAME</th>
+							<th>TRIGGER</th>
+							<th>LAST BLOCKED BUILD</th>
+							<th>LAST SCHEDULED BUILD</th>
+							<th>NEXT SCHEDULED BUILD</th>
+						</tr>
+						<j:forEach var="job" items="${it.jobs}">
+							<tr>
+								<td><f:checkbox name="${job.name}_enable" checked="${job.configuration.enable}"/></td>
+								<td><a href="${it.rootPath}job/${job.name}/">${job.name}</a></td>
+								<td>${job.trigger}</td>
+								<td>${job.configuration.lastBlocked}</td>
+								<td>${job.configuration.lastScheduled}</td>
+								<td>
+									<f:textbox name="${job.name}_schedule" value="${job.configuration.nextScheduled}" style="width: 100%"/>
+								</td>
+							</tr>
+						</j:forEach>
+					</table>
+					</j:if>
+
+					<j:if test="${it.configuration.tabType == 1}">
+					<table id="jobTable" class="jobTable jobTableFontSize${it.configuration.fontSize}" width="100%" style="margin-top:0px; border-top: none;">
+						<tr height="25px" style="background-color: #F0F0F0; border-top: none;">
+							<th>ENABLE</th>
+							<th>SLAVE NAME</th>
+						</tr>
+						<j:forEach var="slave" items="${it.slaves}">
+							<tr>
+								<td><f:checkbox name="${slave.name}_enable" checked="${slave.configuration.enable}"/></td>
+								<td><a href="${it.rootPath}computer/${slave.name}/">${slave.name}</a></td>
+							</tr>
+						</j:forEach>
+					</table>
+					</j:if>
+				</f:block>
+
+				<f:block>
+				   	<f:submit name="Submit" value="SAVE"/>
+			   	</f:block>
+			</f:form>
+			</j:if>
+		</l:main-panel>
+  </l:layout>
+</j:jelly>

@@ -1,0 +1,133 @@
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:i="jelly:fmt">
+<l:pane width="3" title="${%SmartJenkinsController}">
+    <script type="text/javascript">
+	  var http;	
+	  function test(id,value){
+        var path= this.location.href;  
+        path = path.substring(7);
+        path = path.substring(0,path.indexOf("/")+1);
+        path = "http://"+path;
+		var trid=id;
+		var trvalue=value;		
+        if(window.ActiveXObject){
+            try {
+            alert("ie");
+            http= new ActiveXObject("Msxml2.XMLHTTP") ;
+            }
+            catch (e) {
+              try {
+                  alert("ie2");
+                  http= new ActiveXObject("Microsoft.XMLHTTP") ;
+              } 
+              catch (e2) {
+                  ;
+              }
+            }
+        } 
+        else if(window.XMLHttpRequest){        
+            http= new XMLHttpRequest() ;
+        } 
+     
+        var url = path+"controller/off?id="+trid+"&amp;name="+trvalue;
+        url = encodeURI(url);
+        url = encodeURI(url);
+        http.open("GET",url,true);
+        http.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
+        http.onreadystatechange = callback; 
+        http.send(null); 
+        http.close();
+      }
+   
+      function callback(){
+        if(http.readyState==4){  
+            var responseText = http.responseText;
+            alert(responseText);
+        }
+      }	
+
+      function Ajax(){
+        var path= this.location.href;  
+        path = path.substring(7);
+        path = path.substring(0,path.indexOf("/")+1);
+        path = "http://"+path;
+        var xmlHttp;
+	    try{	
+		    xmlHttp=new XMLHttpRequest();
+	    }
+	    catch (e){
+		    try{
+			    xmlHttp=new ActiveXObject("Msxml2.XMLHTTP"); 
+		    }
+		    catch (e){
+		        try{
+				    xmlHttp=new ActiveXObject("Microsoft.XMLHTTP");
+			    }
+			    catch (e){
+				    alert("No AJAX!?");
+				    return false;
+			    }
+		    }
+	    }
+        xmlHttp.onreadystatechange=function(){
+	        if(xmlHttp.readyState==4){
+		        var responseText= xmlHttp.responseText;
+		        var s = responseText.replace('[','').replace(']','').split(',');
+		        var count=s.length;
+		        var i=1;
+		        var label;
+		        var lbs = document.getElementsByTagName("label");
+		        for(var j=0;j${%lessThan}count-1;j++){
+		            var name= i;
+		            name = name.toString();
+		            document.getElementById(name).value=s[j];
+		            j++;
+		            document.getElementById("ip"+name).innerHTML=s[j];	         
+		            j++;		          
+	               document.getElementById("mac"+name).innerHTML=s[j];		          
+		            i++;           
+		        }		
+		        setTimeout('Ajax()',1000);		
+	        }
+        }
+        var url= path+"controller/refresh";
+        xmlHttp.open("GET",url,true);
+        xmlHttp.send(null);
+        }
+      setTimeout('Ajax()',1000);
+    </script>
+    <form>
+    <tr>
+    <td style="vertical-align:middle;"><b>SLAVE NAME</b></td>
+    <td style="vertical-align:middle;"><b>IP/MAC ADDRESS</b></td>
+    <td style="vertical-align:middle;"><b>ON/OFF</b></td>
+    </tr>
+    <tr >
+    <td colspan="3" style="height:2px; padding:0px;"><hr />
+    </td>
+    </tr>
+   
+	
+			
+					<j:forEach var="slaveName" items="${it.slaveNames}" varStatus="status">
+						<tr >
+							<td style="vertical-align:middle;">${slaveName}</td>			    
+						    <td style="vertical-align:middle;">
+						    <table cellspacing="0" cellpadding="0">
+						    <tr>
+						    <td id="ip${status.count}"  style="padding: 0px;"> ${it.Log[status.count-1]}  </td>
+						    </tr>
+						    <tr>
+						    <td id="mac${status.count}"  style="padding: 0px;">${it.Mac[status.count-1]} </td>
+						    </tr>
+						    </table>
+						    </td>
+							<td style="vertical-align:middle;">
+								<input type="button" value="${it.state[status.count-1]}" id="${status.count}" name="${status.count}" onClick= "test(this.id,this.value)" />							
+							</td>
+							</tr>
+					</j:forEach>
+				
+			</form>
+
+</l:pane> 
+</j:jelly>
