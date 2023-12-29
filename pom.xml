@@ -11,7 +11,7 @@
   <version>1.1-SNAPSHOT</version>
   <packaging>hpi</packaging>
   <description>This plugin reduces the electricity consumption by shutting down idle slaves and re-schedules jobs to avoid the rush hours of electricity. </description>
-  <url>http://wiki.jenkins-ci.org/display/JENKINS/Smart+Jenkins</url>
+  <url>https://wiki.jenkins-ci.org/display/JENKINS/Smart+Jenkins</url>
 
   <developers>
     <developer>
@@ -25,7 +25,7 @@
   </developers>
   
   <scm>
-    <connection>scm:git:git@github.com/jenkinsci/smart-jenkins-plugin.git</connection>
+    <connection>scm:https://github.com/jenkinsci/smart-jenkins-plugin.git</connection>
     <developerConnection>scm:git:git@github.com:jenkinsci/smart-jenkins-plugin.git</developerConnection>
     <url>https://github.com/jenkinsci/smart-jenkins-plugin</url>
   </scm>
@@ -47,14 +47,14 @@
   <repositories>
     <repository>
       <id>repo.jenkins-ci.org</id>
-      <url>http://repo.jenkins-ci.org/public/</url>
+      <url>https://repo.jenkins-ci.org/public/</url>
     </repository>
   </repositories>
 
   <pluginRepositories>
     <pluginRepository>
       <id>repo.jenkins-ci.org</id>
-      <url>http://repo.jenkins-ci.org/public/</url>
+      <url>https://repo.jenkins-ci.org/public/</url>
     </pluginRepository>
   </pluginRepositories>
 </project>
